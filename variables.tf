@@ -49,20 +49,6 @@ variable "subnet_prefix" {
   default     = "10.0.10.0/24"
 }
 
-# - Variables below for the virtual machines - Win AD Server, Win Client
-# - The password associated with the local administrator account on the virtual machine
-# - This is stored in Vault and is fetched from the Vault
-
-variable "vault_id_for_password" {
-  description = "secret name in vault which stores the password for windows vm"
-}
-
-# - The username associated with the local administrator account on the virtual machine
-# - This is stored in Vault and is fetched from the Vault
-variable "vault_id_for_username" {
-  description = "secret name in vault which stores the username for windows vm"
-}
-
 variable "vm_name" {
   description = "Name of the virtual machine"
   default     = "win-vm"
