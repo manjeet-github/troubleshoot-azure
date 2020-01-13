@@ -46,7 +46,7 @@ resource "azurerm_key_vault" "example" {
   }
 }
 
-resource "azurerm_key_vault_certificate" "example" {
+resource "azurerm_key_vault_certificate" "windows-vm-certs" {
   name         = "${local.virtual_machine_name_client}-cert"
   key_vault_id = "${azurerm_key_vault.example.id}"
 
@@ -201,7 +201,7 @@ resource "azurerm_network_interface" "windows-vm-nic" {
   name                      = "win-client-vm-nic-${count.index}"
   resource_group_name = azurerm_resource_group.example.name
   location            = var.location
-  network_security_group_id = azurerm_network_security_group.nw_sg.id
+  network_security_group_id = azurerm_network_security_group.windows-vm-sg.id
   //dns_servers               = [${var.dns_servers}]
 
   ip_configuration {
@@ -267,7 +267,7 @@ resource "azurerm_virtual_machine" "windows-ad-vm" {
     source_vault_id = "${azurerm_key_vault.example.id}"
 
     vault_certificates {
-      certificate_url   = "${azurerm_key_vault_certificate.example.secret_id}"
+      certificate_url   = azurerm_key_vault_certificate.windows-vm-certs.secret_id
       certificate_store = "My"
     }
   }
@@ -278,7 +278,7 @@ resource "azurerm_virtual_machine" "windows-ad-vm" {
 
     winrm {
       protocol        = "https"
-      certificate_url = azurerm_key_vault_certificate.ad_vm_certificate.secret_id
+      certificate_url = azurerm_key_vault_certificate.windows-vm-certs.secret_id
     }
 
     additional_unattend_config {
