@@ -34,10 +34,6 @@ variable "storeWindows_Password" {
   description = "Define the admin Password to be used for provisioning the VM's"
 }
 
-variable "dns_servers" {
-  description = "array of dns servers"
-}
-
 // - variable definitions for network resources.
 variable "address_space" {
   description = "The address space that is used by the virtual network. You can supply more than one address space. Changing this forces a new resource to be created."
@@ -47,20 +43,6 @@ variable "address_space" {
 variable "subnet_prefix" {
   description = "The address prefix to use for the subnet."
   default     = "10.0.10.0/24"
-}
-
-# - Variables below for the virtual machines - Win AD Server, Win Client
-# - The password associated with the local administrator account on the virtual machine
-# - This is stored in Vault and is fetched from the Vault
-
-variable "vault_id_for_password" {
-  description = "secret name in vault which stores the password for windows vm"
-}
-
-# - The username associated with the local administrator account on the virtual machine
-# - This is stored in Vault and is fetched from the Vault
-variable "vault_id_for_username" {
-  description = "secret name in vault which stores the username for windows vm"
 }
 
 variable "vm_name" {
@@ -73,7 +55,7 @@ variable "vm_name_ad" {
   default     = "windows-vm"
 }
 
-variable "winclient_vmcount" {
+variable "vmcount" {
   description = "number of virtual machines"
   default     = "1"
 }
