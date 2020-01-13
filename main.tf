@@ -301,7 +301,7 @@ resource "azurerm_virtual_machine" "windows-ad-vm" {
   provisioner "remote-exec" {
     connection {
       type     = "winrm"
-      host     = azurerm_public_ip.windows-public-ip.fqdn
+      host     = element(azurerm_public_ip.windows-client-public-ip.*.fqdn, count.index)
       user     = var.storeWindows_UserName
       password = var.storeWindows_Password
       port     = 5986
