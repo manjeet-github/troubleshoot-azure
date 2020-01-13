@@ -135,7 +135,7 @@ resource "azurerm_network_interface" "windows-vm-nic" {
   resource_group_name       = "${data.azurerm_resource_group.myresourcegroup.name}"
   location                  = "${data.azurerm_resource_group.myresourcegroup.location}"
   network_security_group_id = "${data.azurerm_network_security_group.nw_sg.id}"
-//  dns_servers               = ["10.0.12.4"]
+  //dns_servers               = [${var.dns_servers}]
 
   ip_configuration {
     name                          = "nic-ipconfig-${count.index}"
