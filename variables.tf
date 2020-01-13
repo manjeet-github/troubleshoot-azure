@@ -34,10 +34,6 @@ variable "storeWindows_Password" {
   description = "Define the admin Password to be used for provisioning the VM's"
 }
 
-variable "dns_servers" {
-  description = "array of dns servers"
-}
-
 // - variable definitions for network resources.
 variable "address_space" {
   description = "The address space that is used by the virtual network. You can supply more than one address space. Changing this forces a new resource to be created."
