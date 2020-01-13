@@ -201,12 +201,12 @@ resource "azurerm_network_interface" "windows-vm-nic" {
   name                      = "win-client-vm-nic-${count.index}"
   resource_group_name = azurerm_resource_group.example.name
   location            = var.location
-  network_security_group_id = "${data.azurerm_network_security_group.nw_sg.id}"
+  network_security_group_id = azurerm_network_security_group.nw_sg.id
   //dns_servers               = [${var.dns_servers}]
 
   ip_configuration {
     name                          = "nic-ipconfig-${count.index}"
-    subnet_id                     = "${data.azurerm_subnet.subnet.id}"
+    subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "dynamic"
     public_ip_address_id          = "${element(azurerm_public_ip.windows-public-ip.*.id, count.index)}"
   }
@@ -225,7 +225,7 @@ resource "azurerm_network_interface" "windows-vm-nic" {
 # - Install and run the powershell script
 resource "azurerm_virtual_machine" "windows-ad-vm" {
 
-  count                 = var.winclient_vmcount
+  count                 = var.vmcount
   name                  = "${local.virtual_machine_name_client}-${count.index}"
   resource_group_name       = azurerm_resource_group.example.name
   location                  = var.location
