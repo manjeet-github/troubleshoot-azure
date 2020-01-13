@@ -1,6 +1,6 @@
 locals {
-  virtual_machine_name = "${var.vm_name}-client"
-  custom_data_params  = "Param($ComputerName = \"${local.virtual_machine_name}\")"
+  virtual_machine_name_client = "${var.vm_name}-client"
+  custom_data_params  = "Param($ComputerName = \"${local.virtual_machine_name_client}\")"
   custom_data_content = "${local.custom_data_params} ${file("./files/winrm.ps1")}"
 }
 
@@ -47,7 +47,7 @@ resource "azurerm_key_vault" "example" {
 }
 
 resource "azurerm_key_vault_certificate" "example" {
-  name         = "${local.virtual_machine_name}-cert"
+  name         = "${local.virtual_machine_name_client}-cert"
   key_vault_id = "${azurerm_key_vault.example.id}"
 
   certificate_policy {
@@ -90,25 +90,25 @@ resource "azurerm_key_vault_certificate" "example" {
         "keyEncipherment",
       ]
 
-      subject            = "CN=${local.virtual_machine_name}"
+      subject            = "CN=${local.virtual_machine_name_client}"
       validity_in_months = 12
     }
   }
 }
 
-
-resource "azurerm_virtual_network" "example" {
-  name                = "${var.prefix}-network"
-  address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.example.location
+resource "azurerm_virtual_network" "vnet" {
+  name                = "${var.prefix}-vnet"
   resource_group_name = azurerm_resource_group.example.name
+  location            = var.location
+  address_space       = ["${var.address_space}"]
+  tags = var.tags
 }
 
-resource "azurerm_subnet" "example" {
-  name                 = "internal"
-  resource_group_name  = azurerm_resource_group.example.name
-  virtual_network_name = azurerm_virtual_network.example.name
-  address_prefix       = "10.0.2.0/24"
+resource "azurerm_subnet" "subnet" {
+  name                 = "${var.prefix}-subnet-1"
+  resource_group_name = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefix       = var.subnet_prefix
 }
 
 resource "azurerm_network_security_group" "windows-vm-sg" {
@@ -224,12 +224,19 @@ resource "azurerm_network_interface" "windows-vm-nic" {
 # - Create a new virtual machine with the following configuration
 # - Install and run the powershell script
 resource "azurerm_virtual_machine" "windows-ad-vm" {
-  name                  = local.virtual_machine_name_ad
-  resource_group_name   = azurerm_resource_group.example.name
-  location              = var.location
-  network_interface_ids = ["${azurerm_network_interface.windows-ad-vm-nic.id}"]
+
+  count                 = var.winclient_vmcount
+  name                  = "${local.virtual_machine_name_client}-${count.index}"
+  resource_group_name       = azurerm_resource_group.example.name
+  location                  = var.location
+  network_interface_ids = ["${element(azurerm_network_interface.windows-client-vm-nic.*.id, count.index)}"]
   vm_size               = var.vmsize["medium"]
-  tags                  = var.tags
+
+  tags = merge(
+    map(
+      "Name", "win-client-virtual-machine-${count.index}",
+      "Description", "This is windows vm workstation client for developers"
+    ), var.tags)
 
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
@@ -250,7 +257,7 @@ resource "azurerm_virtual_machine" "windows-ad-vm" {
   }
 
   os_profile {
-    computer_name  = local.virtual_machine_name
+    computer_name  = local.virtual_machine_name_client
     admin_username = var.storeWindows_UserName
     admin_password = var.storeWindows_Password
     custom_data    = local.custom_data_content
@@ -313,21 +320,4 @@ resource "azurerm_virtual_machine" "windows-ad-vm" {
   }
 
 
-}
-
-// this provisions a single node configuration with no redundancy.
-resource "azurerm_virtual_machine_extension" "create-active-directory-forest" {
-  name                 = "create-active-directory-forest"
-  resource_group_name = azurerm_resource_group.example.name
-  location            = var.location
-  virtual_machine_name = azurerm_virtual_machine.windows-ad-vm.name
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.9"
-
-  settings = <<SETTINGS
-    {
-        "commandToExecute": "powershell.exe -Command \"${local.powershell_command}\""
-    }
-SETTINGS
 }
