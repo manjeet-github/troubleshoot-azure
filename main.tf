@@ -196,7 +196,7 @@ resource "azurerm_public_ip" "windows-public-ip" {
   }"
 }
 
-resource "azurerm_network_interface" "windows-vm-nic" {
+resource "azurerm_network_interface" "windows-client-vm-nic" {
   count                     = "${var.vmcount}"
   name                      = "win-client-vm-nic-${count.index}"
   resource_group_name = azurerm_resource_group.example.name
