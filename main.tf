@@ -19,8 +19,8 @@ data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "example" {
   name                = "${var.prefix}keyvault"
-  location            = "${azurerm_resource_group.example.location}"
-  resource_group_name = "${azurerm_resource_group.example.name}"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
   tenant_id           = "${data.azurerm_client_config.current.tenant_id}"
 
   enabled_for_deployment          = true
@@ -100,15 +100,82 @@ resource "azurerm_key_vault_certificate" "example" {
 resource "azurerm_virtual_network" "example" {
   name                = "${var.prefix}-network"
   address_space       = ["10.0.0.0/16"]
-  location            = "${azurerm_resource_group.example.location}"
-  resource_group_name = "${azurerm_resource_group.example.name}"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
 }
 
 resource "azurerm_subnet" "example" {
   name                 = "internal"
-  resource_group_name  = "${azurerm_resource_group.example.name}"
-  virtual_network_name = "${azurerm_virtual_network.example.name}"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
   address_prefix       = "10.0.2.0/24"
+}
+
+resource "azurerm_network_security_group" "windows-vm-sg" {
+  name                = "${var.prefix}-sg"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = var.location
+  tags                = var.tags
+
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "RDP"
+    priority                   = 102
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule { //Here opened WinRMport http
+    name                       = "winrm-http"
+    priority                   = 1010
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5985"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule { //Here opened WinRMport https
+    name                       = "winrm-https"
+    priority                   = 1011
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5986"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 
@@ -116,8 +183,8 @@ resource "azurerm_subnet" "example" {
 resource "azurerm_public_ip" "windows-public-ip" {
   count               = "${var.vmcount}"
   name                = "win-vm-public-ip-${count.index}"
-  resource_group_name = "${data.azurerm_resource_group.myresourcegroup.name}"
-  location            = "${data.azurerm_resource_group.myresourcegroup.location}"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = var.location
   allocation_method   = "Dynamic"
   domain_name_label   = "${lower(var.prefix)}-client-${count.index}"
 
@@ -132,8 +199,8 @@ resource "azurerm_public_ip" "windows-public-ip" {
 resource "azurerm_network_interface" "windows-vm-nic" {
   count                     = "${var.vmcount}"
   name                      = "win-client-vm-nic-${count.index}"
-  resource_group_name       = "${data.azurerm_resource_group.myresourcegroup.name}"
-  location                  = "${data.azurerm_resource_group.myresourcegroup.location}"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = var.location
   network_security_group_id = "${data.azurerm_network_security_group.nw_sg.id}"
   //dns_servers               = [${var.dns_servers}]
 
