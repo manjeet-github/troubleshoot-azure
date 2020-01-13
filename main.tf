@@ -180,7 +180,7 @@ resource "azurerm_network_security_group" "windows-vm-sg" {
 
 
 # - PROVISION NETWORK RESOURCES
-resource "azurerm_public_ip" "windows-public-ip" {
+resource "azurerm_public_ip" "windows-client-public-ip" {
   count               = "${var.vmcount}"
   name                = "win-vm-public-ip-${count.index}"
   resource_group_name = azurerm_resource_group.example.name
@@ -208,7 +208,7 @@ resource "azurerm_network_interface" "windows-client-vm-nic" {
     name                          = "nic-ipconfig-${count.index}"
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "dynamic"
-    public_ip_address_id          = "${element(azurerm_public_ip.windows-public-ip.*.id, count.index)}"
+    public_ip_address_id          = "${element(azurerm_public_ip.windows-client-public-ip.*.id, count.index)}"
   }
 
   tags = "${merge(
